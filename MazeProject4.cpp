@@ -2,16 +2,21 @@
 #include <list>
 #include <iterator>
 #include <vector>
+#include <queue>
 #include <Windows.h> //you need this header to use Sleep()
 
 using namespace std;
 
+// template class
+template <class T, class Container = deque<T> > class queue;
+
 // declare global functions
 void printMap();
-void printStack();
+void printQueue();
 bool checkPath(int, int, int);
 int getValue(int, int);
 void setValue(int, int, int);
+std::queue<vector<int>> popBackQueue(std::queue<vector<int>>);
 
 // declare global variables
 const int tileSize = 3;
@@ -24,21 +29,25 @@ int map[rows][cols] = {
 	{1,0,1,0,0},
 	{1,3,1,1,1}
 };
-vector<vector<int>> coorStack = { {0,0} };
+
+std::queue<std::vector<int>> coorQueue;
+
 
 string mapString = "";
 
 int main()
 {
 	cout << "Start!\n";
+	coorQueue.push({0,0});
+	cout << coorQueue.size();
 	checkPath(0, 0, 0); // path starts at { 0, 0 }
 	cout << "\nFinished!\n";
 }
 
 bool checkPath(int startValue, int row, int col) {
 	printMap();
-	cout << "\nStack: ";
-	printStack();
+	cout << "\nQueue: ";
+	printQueue();
 	Sleep(250);
 
 	// define value value to be set
@@ -54,10 +63,10 @@ bool checkPath(int startValue, int row, int col) {
 	else if (getValue(row - 1, col) == startValue || getValue(row - 1, col) == 0) { // top
 		if (getValue(row - 1, col) == 0) {
 			endValue = 4;
-			coorStack.push_back({ row - 1, col });
+			coorQueue.push({ row - 1, col });
 		}
 		else {
-			coorStack.pop_back();
+			coorQueue = popBackQueue(coorQueue);
 		}
 		setValue(endValue, row - 1, col);
 		checkPath(startValue, row - 1, col);
@@ -65,10 +74,10 @@ bool checkPath(int startValue, int row, int col) {
 	else if (getValue(row, col + 1) == startValue || getValue(row, col + 1) == 0) { // right
 		if (getValue(row, col + 1) == 0) {
 			endValue = 4;
-			coorStack.push_back({ row, col + 1 });
+			coorQueue.push({ row, col + 1 });
 		}
 		else {
-			coorStack.pop_back();
+			coorQueue = popBackQueue(coorQueue);
 		}
 		setValue(endValue, row, col + 1);
 		checkPath(startValue, row, col + 1);
@@ -76,10 +85,10 @@ bool checkPath(int startValue, int row, int col) {
 	else if (getValue(row + 1, col) == startValue || getValue(row + 1, col) == 0) { // bottom
 		if (getValue(row + 1, col) == 0) {
 			endValue = 4;
-			coorStack.push_back({ row + 1, col });
+			coorQueue.push({ row + 1, col });
 		}
 		else {
-			coorStack.pop_back();
+			coorQueue = popBackQueue(coorQueue);
 		}
 		setValue(endValue, row + 1, col);
 		checkPath(startValue, row + 1, col);
@@ -87,10 +96,10 @@ bool checkPath(int startValue, int row, int col) {
 	else if (getValue(row, col - 1) == startValue || getValue(row, col - 1) == 0) { // left
 		if (getValue(row, col - 1) == 0) {
 			endValue = 4;
-			coorStack.push_back({ row, col - 1 });
+			coorQueue.push({ row, col - 1 });
 		}
 		else {
-			coorStack.pop_back();
+			coorQueue = popBackQueue(coorQueue);
 		}
 		setValue(endValue, row, col - 1);
 		checkPath(startValue, row, col - 1);
@@ -98,7 +107,7 @@ bool checkPath(int startValue, int row, int col) {
 	else { // switch start value to previously checked coordinates
 		setValue(5, row, col);
 		checkPath(4, row, col);
-		coorStack.pop_back();
+		coorQueue = popBackQueue(coorQueue);
 	}
 	return false;
 }
@@ -153,18 +162,31 @@ void printMap() {
 	cout << mapString;
 }
 
-void printStack() {
+void printQueue() {
+	std::queue<vector<int>> tempQueue = coorQueue;
+
 	cout << "\n";
-	for (int i = 0; i < coorStack.size(); i++) {
-		for (int j = 0; j < coorStack[i].size(); j++) {
-			if (j == 0) {
-				cout << "{" << coorStack[i][j];
+	while (!tempQueue.empty()){
+		vector<int> tempCoor = tempQueue.front();
+		for (int i = 0; i < tempCoor.size(); i++) {
+			if (i == 0) {
+				cout << "{" << tempCoor[i];
 			}
 			else {
-				cout << ", " << coorStack[i][j] << "}";
+				cout << ", " << tempCoor[i] << "}";
 			}
 		}
-		if (i != coorStack.size() - 1) cout << ", ";
+		tempQueue.pop();
+		if (tempQueue.size() > 0) cout << ", ";
 	}
-	cout << "\n";
+}
+
+// create new queue with one less vector
+std::queue<vector<int>> popBackQueue(std::queue<vector<int>> tempQueue){ 
+	std::queue<vector<int>> newQueue;
+	for (int i = 0; i < coorQueue.size() - 1; i++) {
+		newQueue.push(tempQueue.front());
+		tempQueue.pop();
+	}
+	return newQueue;
 }
